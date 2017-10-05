@@ -1,0 +1,70 @@
+# Server configuration
+server:
+    port: 8080
+
+# Spring Actuator configuration
+management:
+    port: 9080
+    address: 127.0.0.1
+    security.enabled: false
+info:
+    app:
+        name: Spring Boot Framework
+        description: A framework used to start developing a new Spring Boot application
+        version: 1.0.0
+
+# Datababase configuration
+spring:
+    datasource:
+        url: jdbc:derby://localhost:1527/lookup_value
+        username: gadnex
+        password: gadnex
+        driver-class-name: org.apache.derby.jdbc.ClientDriver
+    jpa:
+        hibernate.ddl-auto: none
+        properties:
+            hibernate:
+                show_sql: true
+                format_sql: true
+# Infinispan configuration
+                cache:
+                    use_second_level_cache: true
+                    use_query_cache: true
+                    region:
+                        factory_class: org.hibernate.cache.infinispan.InfinispanRegionFactory
+                    inifinispan:
+                        statistics: true
+                        cfg: infinispan.xml
+#                        entity:
+#                            expiration:
+#                                lifespan: 10000
+#                        From Hibernate 5.2
+#                        net.binarypaper.springbootframework.lookup.LookupValue.expiration.lifespan: 10000
+
+# Email send configuration
+    mail:
+        host: localhost
+        port: 25
+#        username: <login user to smtp server>
+#        password: <login password to smtp server>
+#        properties:
+#            mail:
+#                smtp:
+#                    auth: true
+#                    starttls:
+#                        enable: true
+
+# Configure keycloak realm
+keycloak:
+    auth-server-url: http://localhost:8180/auth
+    realm: demo
+    resource: rest-api
+    bearer-only: true
+    ssl-required: external
+    principal-attribute: preferred_username
+
+# Custom configuration
+project.version: @project.version@
+
+# Logging Configuration
+logging.level.freemarker.core.*: FATAL

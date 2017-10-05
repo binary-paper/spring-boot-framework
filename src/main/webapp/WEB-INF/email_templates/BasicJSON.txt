@@ -1,0 +1,4 @@
+<#assign data = data?eval>
+Hello ${data.firstName} ${data.surname},
+
+This is a basic JSON to plain text FreeMarker template

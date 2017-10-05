@@ -1,0 +1,58 @@
+@startuml
+
+interface "Lookup Value Service" <<REST Service>>
+hide "Lookup Value Service" fields
+hide "Lookup Value Service" methods
+
+interface "Render Notification Service" <<REST Service>>
+hide "Render Notification Service" fields
+hide "Render Notification Service" methods
+
+package SpringBootFramework <<Spring Boot>> {
+
+    class LookupValueController <<Spring RestController>> {
+     + addLookupValue()
+     + getLookupValuesByLookupListName()
+     + getLookupValueById()
+     + updateLookupValue()
+     + deleteLookupValueById()
+     + getLookupValueRevisions()
+     + uploadCsvFile()
+    }
+    "Lookup Value Service" <|-- LookupValueController
+    
+    class LookupValue
+    hide LookupValue fields
+    hide LookupValue methods
+    LookupValueController ..> LookupValue
+
+    class RenderNotificationController <<Spring RestController>> {
+     + renderDocument()
+    }
+    "Render Notification Service" <|-- RenderNotificationController
+
+    class FreemarkerRenderService <<Spring Service>> {
+     + render()
+    }
+    RenderNotificationController ..> FreemarkerRenderService : <<AutoWired>>
+
+    class email_queue <<(O, #FF7700) ActiveMQ in memory>>
+    hide email_queue fields
+    hide email_queue methods
+    RenderNotificationController ..> email_queue : <<JMS>> EmailMessage
+
+    class EmailMessageSender <<Spring Component>>
+    email_queue ..> EmailMessageSender : <<JMS>> EmailMessage
+}
+
+class "Email Server" <<(C, #00FF00)>>
+hide "Email Server" fields
+hide "Email Server" methods
+EmailMessageSender ..> "Email Server" : <<JavaMail>> Email
+
+class Database <<(D, #0077FF) Derby DB>>
+hide Database fields
+hide Database methods
+LookupValueController ..> Database : <<Hibernate JPA>>
+
+@enduml

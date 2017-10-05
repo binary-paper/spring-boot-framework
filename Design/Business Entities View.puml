@@ -1,0 +1,18 @@
+@startuml
+class ActivatableEntity <<MappedSuperclass>> {
+    - active: Boolean
+}
+ActivatableEntity <|-- DatedEntity
+class DatedEntity <<MappedSuperclass>> {
+    - effectiveFrom: Date
+    - effectiveTo: Date
+}
+DatedEntity <|-- LookupValue
+class LookupValue <<JPA Entity>> {
+    - id: Long
+    - version: Long
+    - lookupListName: String
+    - displayValue: String
+}
+LookupValue "-parent 1" *-- "-children 0..*" LookupValue
+@enduml

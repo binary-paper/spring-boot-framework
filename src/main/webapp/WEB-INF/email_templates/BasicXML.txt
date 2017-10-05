@@ -1,0 +1,3 @@
+Hello ${data.root.firstName} ${data.root.surname},
+
+This is a basic XML to plain text FreeMarker template
