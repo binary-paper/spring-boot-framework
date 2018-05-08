@@ -2,17 +2,6 @@
 server:
     port: 8080
 
-# Spring Actuator configuration
-management:
-    port: 9080
-    address: 127.0.0.1
-    security.enabled: false
-info:
-    app:
-        name: Spring Boot Framework
-        description: A framework used to start developing a new Spring Boot application
-        version: 1.0.0
-
 # Datababase configuration
 spring:
     datasource:
@@ -25,21 +14,24 @@ spring:
         properties:
             hibernate:
                 show_sql: true
-                format_sql: true
-# Infinispan configuration
+                format_sql: false
+                generate_statistics: false
                 cache:
                     use_second_level_cache: true
                     use_query_cache: true
                     region:
-                        factory_class: org.hibernate.cache.infinispan.InfinispanRegionFactory
-                    inifinispan:
-                        statistics: true
-                        cfg: infinispan.xml
-#                        entity:
+                        factory_class: infinispan
+#                    inifinispan:
+#                        QueriesRegion:
+#                            eviction:
+#                                strategy: LRU
+#                                max_entries: 10000
 #                            expiration:
 #                                lifespan: 10000
-#                        From Hibernate 5.2
-#                        net.binarypaper.springbootframework.lookup.LookupValue.expiration.lifespan: 10000
+#                                max_idle: 10000
+#                                wake_up_interval: 5000
+#                        statistics: true
+#                        cfg: infinispan.xml
 
 # Email send configuration
     mail:
@@ -67,4 +59,6 @@ keycloak:
 project.version: @project.version@
 
 # Logging Configuration
-logging.level.freemarker.core.*: FATAL
+logging:
+    level:
+        freemarker.core.*: FATAL

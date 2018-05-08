@@ -15,8 +15,8 @@
  */
 package net.binarypaper.springbootframework;
 
-import static com.google.common.collect.Lists.newArrayList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,12 +32,11 @@ import springfox.documentation.service.SecurityReference;
 import springfox.documentation.service.Tag;
 import springfox.documentation.service.TokenEndpoint;
 import springfox.documentation.service.TokenRequestEndpoint;
-import springfox.documentation.service.VendorExtension;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger.web.ApiKeyVehicle;
 import springfox.documentation.swagger.web.SecurityConfiguration;
+import springfox.documentation.swagger.web.SecurityConfigurationBuilder;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
@@ -58,21 +57,14 @@ public class SwaggerConfig {
     @Value("${project.version}")
     private String projectVersion;
 
+    @Value("${keycloak.auth-server-url}")
+    private String keycloakAuthServerUrl;
+
+    @Value("${keycloak.realm}")
+    private String keycloakRealm;
+
     @Bean
     public Docket swaggerApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("net.binarypaper.springbootframework"))
-                .paths(PathSelectors.regex("/.*"))
-                .build()
-                .apiInfo(apiInfo())
-                .tags(new Tag("Lookup Values", "A lookup value REST resource"),
-                        new Tag("Render Notification", "A render notification REST resource"))
-                .securitySchemes(newArrayList(securitySchema()))
-                .securityContexts(newArrayList(securityContext()));
-    }
-
-    private ApiInfo apiInfo() {
         ApiInfo apiInfo = new ApiInfo(
                 "SpringBootFramework REST API",
                 "REST API documentation",
@@ -81,36 +73,39 @@ public class SwaggerConfig {
                 new Contact("Willy Gadney", "", "willy.gadney@binarypaper.net"),
                 "Apache License Version 2.0",
                 "http://www.apache.org/licenses/LICENSE-2.0",
-                vendorExtensions());
-        return apiInfo;
+                new ArrayList<>()
+        );
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("net.binarypaper.springbootframework"))
+                .paths(PathSelectors.regex("/.*"))
+                .build()
+                .apiInfo(apiInfo)
+                .tags(new Tag("Lookup Values", "A lookup value REST resource"),
+                        new Tag("Render Notification", "A render notification REST resource"))
+                .securitySchemes(securitySchema())
+                .securityContexts(securityContext());
     }
 
-    private List<VendorExtension> vendorExtensions() {
-        ArrayList<VendorExtension> vendorExtensions = new ArrayList<>();
-        return vendorExtensions;
-    }
-
-    private OAuth securitySchema() {
-//        AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
-        TokenRequestEndpoint tokenRequestEndpoint = new TokenRequestEndpoint("http://localhost:8180/auth/realms/demo/protocol/openid-connect/auth", "swagger-ui", null);
-        TokenEndpoint tokenEndpoint = new TokenEndpoint("http://localhost:8180/auth/realms/demo/protocol/openid-connect/token", "access_token");
+    private List<OAuth> securitySchema() {
+        String keycloakRealmUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/protocol/openid-connect/";
+        TokenRequestEndpoint tokenRequestEndpoint = new TokenRequestEndpoint(keycloakRealmUrl + "auth", "swagger-ui", null);
+        TokenEndpoint tokenEndpoint = new TokenEndpoint(keycloakRealmUrl + "token", "access_token");
         AuthorizationCodeGrant authorizationCodeGrant = new AuthorizationCodeGrant(tokenRequestEndpoint, tokenEndpoint);
-        return new OAuth(O_AUTH_2, newArrayList(), newArrayList(authorizationCodeGrant));
-//        return new OAuth(O_AUTH_2, newArrayList(authorizationScope), newArrayList(grantType));
+        return Arrays.asList(new OAuth(O_AUTH_2, Arrays.asList(), Arrays.asList(authorizationCodeGrant)));
     }
 
-    private SecurityContext securityContext() {
-        return SecurityContext.builder()
+    private List<SecurityContext> securityContext() {
+        SecurityContext securityContext = SecurityContext
+                .builder()
                 .securityReferences(defaultAuth())
                 .build();
+        return Arrays.asList(securityContext);
     }
 
-    List<SecurityReference> defaultAuth() {
+    private List<SecurityReference> defaultAuth() {
         AuthorizationScope[] authorizationScopes = new AuthorizationScope[0];
-//        AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
-//        AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
-//        authorizationScopes[0] = authorizationScope;
-        return newArrayList(new SecurityReference(O_AUTH_2, authorizationScopes));
+        return Arrays.asList(new SecurityReference(O_AUTH_2, authorizationScopes));
     }
 
     /**
@@ -122,14 +117,11 @@ public class SwaggerConfig {
      */
     @Bean
     SecurityConfiguration security() {
-        return new SecurityConfiguration(
-                "swagger-ui", /*client ID*/
-                "", /*client secret*/
-                "demo", /*realm*/
-                "your-app-name", /*app name*/
-                "", /*api key*/
-                ApiKeyVehicle.HEADER, /*api key vehicle*/
-                "", /*api key name*/
-                " " /*scope separator*/);
+        return SecurityConfigurationBuilder
+                .builder()
+                .realm(keycloakRealm)
+                .clientId("swagger-ui")
+                .appName("spring-boot-framework")
+                .build();
     }
 }
