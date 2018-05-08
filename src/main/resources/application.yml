@@ -4,6 +4,12 @@ server:
 
 # Datababase configuration
 spring:
+    jackson:
+        mapper:
+            DEFAULT_VIEW_INCLUSION: true
+        serialization:
+            WRITE_DATES_AS_TIMESTAMPS: false
+        time-zone: GMT+2
     datasource:
         url: jdbc:derby://localhost:1527/lookup_value
         username: gadnex
