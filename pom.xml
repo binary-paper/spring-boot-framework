@@ -218,27 +218,6 @@
                     <sourcepath>target/generated-sources/delombok</sourcepath>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <classpathScope>test</classpathScope>
-                            <mainClass>net.binarypaper.springbootframework.database.FixDatabaseScriptDelimiters</mainClass>
-                            <arguments>
-                                <argument>database-scripts/create-database.sql</argument>
-                                <argument>database-scripts/drop-database.sql</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 </project>
