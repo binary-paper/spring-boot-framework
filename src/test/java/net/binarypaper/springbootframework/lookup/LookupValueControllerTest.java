@@ -17,7 +17,6 @@ package net.binarypaper.springbootframework.lookup;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -41,10 +40,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import net.binarypaper.springbootframework.entity.AuditRevision;
 import net.binarypaper.springbootframework.exception.BusinessLogicError;
 import net.binarypaper.springbootframework.exception.FieldError;
-import net.binarypaper.springbootframework.security.KeycloakToken;
-import net.binarypaper.springbootframework.security.RestTestHelper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 /**
@@ -71,16 +70,19 @@ public class LookupValueControllerTest {
     private static final String CLIENT_ID = "swagger-ui";
     private static final String USER_NAME = "test";
     private static final String PASSOWRD = "test";
-    private static KeycloakToken KEYCLOAK_TOKEN;
+    private static AccessTokenResponse ACCESS_TOKEN;
 
     @BeforeClass
-    public static void setUpClass() throws IOException {
-        KEYCLOAK_TOKEN = RestTestHelper.getKeycloakToken(KEYCLOAK_SERVER_URL, REALM, CLIENT_ID, USER_NAME, PASSOWRD);
+    public static void setUpClass() {
+        ACCESS_TOKEN = Keycloak
+                .getInstance(KEYCLOAK_SERVER_URL, REALM, USER_NAME, PASSOWRD, CLIENT_ID)
+                .tokenManager()
+                .getAccessToken();
     }
 
     @AfterClass
-    public static void tearDownClass() throws IOException {
-        RestTestHelper.logoutKeycloakToken(KEYCLOAK_TOKEN, KEYCLOAK_SERVER_URL, REALM, CLIENT_ID);
+    public static void tearDownClass() {
+
     }
 
     @Before
@@ -93,8 +95,6 @@ public class LookupValueControllerTest {
 
     @Test
     public void test01() throws Exception {
-        Assert.assertNotNull("Ensure that the Keycloak server is started and correctly configured", KEYCLOAK_TOKEN);
-        Assert.assertNotNull(KEYCLOAK_TOKEN.getAccessToken());
         // Call a REST method without passing the KEYCLOAK_TOKEN
         mvc.perform(
                 MockMvcRequestBuilders
@@ -106,16 +106,18 @@ public class LookupValueControllerTest {
 
     @Test
     public void test02() throws Exception {
-        KeycloakToken norolesKeycloakToken = RestTestHelper.getKeycloakToken(KEYCLOAK_SERVER_URL, REALM, CLIENT_ID, "noroles", "noroles");
+        AccessTokenResponse accessToken = Keycloak
+                .getInstance(KEYCLOAK_SERVER_URL, REALM, "noroles", "noroles", CLIENT_ID)
+                .tokenManager()
+                .getAccessToken();
         // Call a REST method with a user that has no roles
         mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-make")
-                        .header("Authorization", "Bearer " + norolesKeycloakToken.getAccessToken())
+                        .header("Authorization", "Bearer " + accessToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isForbidden());
-        RestTestHelper.logoutKeycloakToken(norolesKeycloakToken, KEYCLOAK_SERVER_URL, REALM, CLIENT_ID);
     }
 
     @Test
@@ -130,7 +132,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -157,7 +159,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -185,7 +187,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -214,7 +216,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -249,7 +251,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -281,7 +283,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -309,7 +311,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -336,7 +338,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -363,7 +365,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -389,7 +391,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "100")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -416,7 +418,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -442,7 +444,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -468,7 +470,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
@@ -493,7 +495,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/lookup-values")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -516,7 +518,7 @@ public class LookupValueControllerTest {
         mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/invalid-name")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
@@ -528,7 +530,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-make")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("effective-date", "2016-01")
                         .contentType(MediaType.APPLICATION_JSON)
         )
@@ -547,7 +549,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-make")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -572,7 +574,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -591,7 +593,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
         )
@@ -612,7 +614,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .param("active", "true")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -634,7 +636,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .param("active", "true")
                         .param("effective-date", "2016-01-01")
@@ -657,7 +659,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .param("active", "true")
                         .param("effective-date", "2015-12-31")
@@ -680,7 +682,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .param("active", "true")
                         .param("effective-date", "2016-12-31")
@@ -703,7 +705,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "1")
                         .param("active", "true")
                         .param("effective-date", "2017-01-01")
@@ -726,7 +728,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "2")
                         .param("active", "true")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -748,7 +750,7 @@ public class LookupValueControllerTest {
         mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/lookup-list-name/vehicle-model")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .param("parent-id", "2")
                         .param("active", "false")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -762,7 +764,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/1")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -783,7 +785,7 @@ public class LookupValueControllerTest {
         mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/7")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
@@ -797,7 +799,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/6")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -815,7 +817,7 @@ public class LookupValueControllerTest {
         jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/6")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -847,7 +849,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/7")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -874,7 +876,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/8")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -894,7 +896,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/2")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -911,7 +913,7 @@ public class LookupValueControllerTest {
         jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/2")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -931,7 +933,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/4")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -948,7 +950,7 @@ public class LookupValueControllerTest {
         jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/4")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -968,7 +970,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/1")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -987,7 +989,7 @@ public class LookupValueControllerTest {
         jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/1")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -1007,7 +1009,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/1")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -1026,7 +1028,7 @@ public class LookupValueControllerTest {
         jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .put("/lookup-values/1")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest)
         )
@@ -1046,7 +1048,7 @@ public class LookupValueControllerTest {
         mvc.perform(
                 MockMvcRequestBuilders
                         .delete("/lookup-values/6")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk());
@@ -1058,7 +1060,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .delete("/lookup-values/7")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
@@ -1076,7 +1078,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .delete("/lookup-values/1")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
@@ -1094,7 +1096,7 @@ public class LookupValueControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/6/revisions")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -1136,7 +1138,7 @@ public class LookupValueControllerTest {
         mvc.perform(
                 MockMvcRequestBuilders
                         .get("/lookup-values/7/revisions")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
@@ -1150,7 +1152,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn()
@@ -1168,7 +1170,7 @@ public class LookupValueControllerTest {
         mvc.perform(
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1184,7 +1186,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("invalidPart", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1200,7 +1202,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1219,7 +1221,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1238,7 +1240,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1257,7 +1259,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1276,7 +1278,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1295,7 +1297,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()
@@ -1314,7 +1316,7 @@ public class LookupValueControllerTest {
                 MockMvcRequestBuilders
                         .fileUpload("/lookup-values/csv-upload")
                         .file("file", FileUtils.readFileToByteArray(csvFile))
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
         )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn()

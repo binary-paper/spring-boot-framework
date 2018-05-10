@@ -19,11 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.junit.GreenMailRule;
 import com.icegreen.greenmail.util.GreenMailUtil;
 import com.icegreen.greenmail.util.ServerSetupTest;
-import java.io.IOException;
 import javax.mail.internet.MimeMessage;
 import net.binarypaper.springbootframework.exception.BusinessLogicError;
-import net.binarypaper.springbootframework.security.KeycloakToken;
-import net.binarypaper.springbootframework.security.RestTestHelper;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -32,6 +29,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -66,25 +65,25 @@ public class RenderNotificationControllerTest {
     private static final String CLIENT_ID = "swagger-ui";
     private static final String USER_NAME = "test";
     private static final String PASSOWRD = "test";
-    private static KeycloakToken KEYCLOAK_TOKEN;
+    private static AccessTokenResponse ACCESS_TOKEN;
 
     @Rule
     public final GreenMailRule greenMail = new GreenMailRule(ServerSetupTest.ALL);
 
     @BeforeClass
-    public static void setUpClass() throws IOException {
-        KEYCLOAK_TOKEN = RestTestHelper.getKeycloakToken(KEYCLOAK_SERVER_URL, REALM, CLIENT_ID, USER_NAME, PASSOWRD);
+    public static void setUpClass() {
+        ACCESS_TOKEN = Keycloak
+                .getInstance(KEYCLOAK_SERVER_URL, REALM, USER_NAME, PASSOWRD, CLIENT_ID)
+                .tokenManager()
+                .getAccessToken();
     }
 
     @AfterClass
-    public static void tearDownClass() throws IOException {
-        RestTestHelper.logoutKeycloakToken(KEYCLOAK_TOKEN, KEYCLOAK_SERVER_URL, REALM, CLIENT_ID);
+    public static void tearDownClass() {
     }
 
     @Test
     public void test01() throws Exception {
-        Assert.assertNotNull("Ensure that the Keycloak server is started and correctly configured", KEYCLOAK_TOKEN);
-        Assert.assertNotNull(KEYCLOAK_TOKEN.getAccessToken());
         // Call a REST method without passing the KEYCLOAK_TOKEN
         String inputJson = "{'firstName': 'Albert', 'surname': 'Einstein'}";
         mvc.perform(
@@ -99,19 +98,21 @@ public class RenderNotificationControllerTest {
 
     @Test
     public void test02() throws Exception {
-        KeycloakToken norolesKeycloakToken = RestTestHelper.getKeycloakToken(KEYCLOAK_SERVER_URL, REALM, CLIENT_ID, "noroles", "noroles");
+        AccessTokenResponse accessToken = Keycloak
+                .getInstance(KEYCLOAK_SERVER_URL, REALM, "noroles", "noroles", CLIENT_ID)
+                .tokenManager()
+                .getAccessToken();
         // Call a REST method with a user that has no roles
         String inputJson = "{'firstName': 'Albert', 'surname': 'Einstein'}";
         mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicJSON.html")
-                        .header("Authorization", "Bearer " + norolesKeycloakToken.getAccessToken())
+                        .header("Authorization", "Bearer " + accessToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.TEXT_HTML)
                         .content(inputJson)
         )
                 .andExpect(MockMvcResultMatchers.status().isForbidden());
-        RestTestHelper.logoutKeycloakToken(norolesKeycloakToken, KEYCLOAK_SERVER_URL, REALM, CLIENT_ID);
     }
 
     @Test
@@ -121,7 +122,7 @@ public class RenderNotificationControllerTest {
         String outputHTML = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicJSON.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.TEXT_HTML)
                         .content(inputJson)
@@ -140,7 +141,7 @@ public class RenderNotificationControllerTest {
         String outputHTML = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicXML.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_XML)
                         .accept(MediaType.TEXT_HTML)
                         .content(inputXml)
@@ -159,7 +160,7 @@ public class RenderNotificationControllerTest {
         String outputHTML = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicJSON.txt")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.TEXT_PLAIN)
                         .content(inputJson)
@@ -178,7 +179,7 @@ public class RenderNotificationControllerTest {
         String outputHTML = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicXML.txt")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_XML)
                         .accept(MediaType.TEXT_PLAIN)
                         .content(inputXml)
@@ -197,7 +198,7 @@ public class RenderNotificationControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/InvalidTemplate.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(inputJson)
@@ -218,7 +219,7 @@ public class RenderNotificationControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicJSON.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(inputJson)
@@ -239,7 +240,7 @@ public class RenderNotificationControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/InvalidTemplateName.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(inputJson)
@@ -260,7 +261,7 @@ public class RenderNotificationControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicJSON.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(inputJson)
@@ -281,7 +282,7 @@ public class RenderNotificationControllerTest {
         String jsonResponse = mvc.perform(
                 MockMvcRequestBuilders
                         .post("/render-notification/BasicXML.html")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_XML)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(inputXml)
@@ -304,7 +305,7 @@ public class RenderNotificationControllerTest {
                         .post("/render-notification/BasicJSON.html")
                         .param("email_to", "test@example.com")
                         .param("email_subject", "Test JSON to HTML Email")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.TEXT_HTML)
                         .content(inputJson)
@@ -332,7 +333,7 @@ public class RenderNotificationControllerTest {
                         .post("/render-notification/BasicXML.html")
                         .param("email_to", "test@example.com")
                         .param("email_subject", "Test XML to HTML Email")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_XML)
                         .accept(MediaType.TEXT_HTML)
                         .content(inputXml)
@@ -360,7 +361,7 @@ public class RenderNotificationControllerTest {
                         .post("/render-notification/BasicJSON.txt")
                         .param("email_to", "test@example.com")
                         .param("email_subject", "Test JSON to Plain Text Email")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.TEXT_PLAIN)
                         .content(inputJson)
@@ -388,7 +389,7 @@ public class RenderNotificationControllerTest {
                         .post("/render-notification/BasicXML.txt")
                         .param("email_to", "test@example.com")
                         .param("email_subject", "Test XML to Plain Text Email")
-                        .header("Authorization", "Bearer " + KEYCLOAK_TOKEN.getAccessToken())
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN.getToken())
                         .contentType(MediaType.APPLICATION_XML)
                         .accept(MediaType.TEXT_PLAIN)
                         .content(inputXml)
