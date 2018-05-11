@@ -57,7 +57,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 @SpringBootTest
 @TestPropertySource(locations = "/application-test.properties")
 @AutoConfigureMockMvc
-public class LookupValueControllerTest {
+public class LookupValueControllerIT {
 
     @Autowired
     private MockMvc mvc;

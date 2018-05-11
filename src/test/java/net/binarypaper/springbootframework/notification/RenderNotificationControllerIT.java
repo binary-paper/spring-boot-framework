@@ -52,7 +52,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 @SpringBootTest
 @TestPropertySource(locations = "/application-test.properties")
 @AutoConfigureMockMvc
-public class RenderNotificationControllerTest {
+public class RenderNotificationControllerIT {
 
     @Autowired
     private MockMvc mvc;

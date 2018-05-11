@@ -102,7 +102,6 @@
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>2.3.23</version>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
@@ -186,11 +185,21 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.21.0</version>
                 <configuration>
-                    <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${basedir}/target/classes</additionalClasspathElement>
+                    </additionalClasspathElements>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.projectlombok</groupId>
@@ -212,7 +221,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
+                <version>3.0.0</version>
                 <configuration>
                     <defaultVersion>${project.version}</defaultVersion>
                     <sourcepath>target/generated-sources/delombok</sourcepath>
