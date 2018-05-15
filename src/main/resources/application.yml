@@ -64,6 +64,18 @@ keycloak:
 # Custom configuration
 project.version: @project.version@
 
+# Actuator configuration
+management:
+    server:
+        port: 9080
+    endpoints:
+        web:
+            exposure:
+                include: "*"
+    endpoint:
+        health:
+            show-details: always
+
 # Logging Configuration
 logging:
     level:
